@@ -5,6 +5,7 @@ import (
 	_ "github.com/lib/pq"
 	"google-gen/internal/handlers"
 	"google-gen/internal/postgres"
+	"google-gen/internal/postgres/CRUD"
 	"google-gen/internal/repo"
 	"google-gen/pkg/config"
 	"log"
@@ -31,11 +32,13 @@ func main() {
 	}
 	defer db.Close()
 
-	user := postgres.NewUsers(db)
+	user := CRUD.NewUsers(db)
 	userService := repo.UserRepoI(user)
 
+	question := CRUD.NewQuestion(db)
+	questService := repo.QuestionRepo(question)
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	handlers.New(ctx, cfg.TelegramToken, userService)
+	handlers.New(ctx, cfg.TelegramToken, userService, questService)
 	defer cancel()
 
 }

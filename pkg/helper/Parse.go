@@ -4,6 +4,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
+	"regexp"
+	"strings"
 )
 
 func ExampleScrape(url string) []string {
@@ -33,4 +35,25 @@ func ExampleScrape(url string) []string {
 		//fmt.Printf("Review %d: %s\n", i, title)
 	})
 	return result
+}
+func IsGoogleFormsLink(url string) bool {
+	// Проверяем, содержит ли ссылка подстроку "google.com/forms/"
+	// и "viewform"
+	return strings.Contains(url, "google.com/forms/") && strings.Contains(url, "viewform")
+}
+func GetEntry(htmls []string) []string {
+	resp := make([]string, 0)
+	firstStr := `data-params="%.@.`
+	for _, j := range htmls {
+		firstIndex := strings.Index(j, firstStr)
+		lastIndex := strings.Index(j, "<div jscontroller")
+		matcherStr := j[firstIndex+len(firstStr) : lastIndex]
+		regex := `\[\[(\d+),`
+		re := regexp.MustCompile(regex)
+		m := re.FindStringSubmatch(matcherStr)
+		if len(matcherStr) > 1 {
+			resp = append(resp, m[1])
+		}
+	}
+	return resp
 }

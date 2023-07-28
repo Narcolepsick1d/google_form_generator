@@ -5,8 +5,10 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"google-gen/internal/model"
+	"google-gen/pkg/helper"
 	"log"
 	"strconv"
+	"strings"
 )
 
 func NewHandle(opt *H) *H {
@@ -53,5 +55,29 @@ func (h *H) handler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	})
 }
 func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
-
+	if !helper.IsGoogleFormsLink(update.Message.Text) {
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "Проверьте вашу ссылку  ",
+		})
+		return
+	}
+	_, err := h.Question.Create(ctx, model.Question{
+		UserId: strconv.Itoa(int(update.Message.From.ID)),
+		Link:   update.Message.Text,
+	})
+	if err != nil {
+		log.Printf("error while adding url %v", err)
+		return
+	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   "сканируем ваш опросник :)",
+	})
+	s := helper.ExampleScrape(update.Message.Text)
+	entries := helper.GetEntry(s)
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   strings.Join(entries, "\n"),
+	})
 }

@@ -1,7 +1,7 @@
 Create TABLE  if not exists Users(
     Id serial primary key ,
     guid uuid default uuid_generate_v4(),
-    TelegramId varchar not null unique ,
+    Telegram_id varchar not null unique ,
     NickName varchar,
     FirstName varchar,
     LastName varchar,

@@ -1,4 +1,4 @@
-package postgres
+package CRUD
 
 import (
 	"context"
@@ -16,8 +16,8 @@ func NewUsers(db *sqlx.DB) *UserRepo {
 	return &UserRepo{db: db}
 }
 func (u UserRepo) Create(ctx context.Context, user model.UserTg) error {
-	query := `INSERT INTO USERS (TelegramId,NickName,FirstName,LastName)
-			values ($1,$2,$3,$4) on conflict (TelegramId) Do nothing`
+	query := `INSERT INTO USERS (Telegram_Id,NickName,FirstName,LastName)
+			values ($1,$2,$3,$4) on conflict (Telegram_Id) Do nothing`
 	_, err := u.db.Exec(query,
 		user.TelegramId,
 		user.UserName,
