@@ -2,6 +2,7 @@ package helper
 
 import (
 	"github.com/PuerkitoBio/goquery"
+	"google-gen/internal/model"
 	"log"
 	"net/http"
 	"regexp"
@@ -39,21 +40,42 @@ func ExampleScrape(url string) []string {
 func IsGoogleFormsLink(url string) bool {
 	// Проверяем, содержит ли ссылка подстроку "google.com/forms/"
 	// и "viewform"
-	return strings.Contains(url, "google.com/forms/") && strings.Contains(url, "viewform")
+	return strings.Contains(url, "google.com/forms/") && strings.Contains(url, "viewform") || strings.Contains(url, "https://forms.gle/")
 }
-func GetEntry(htmls []string) []string {
-	resp := make([]string, 0)
-	firstStr := `data-params="%.@.`
+func GetEntry(htmls []string) []model.Label {
+	resp := make([]model.Label, 0)
+	firstStr := `data-params="%.@.[`
 	for _, j := range htmls {
+		var entry model.Label
+		entries := make([]string, 0)
 		firstIndex := strings.Index(j, firstStr)
 		lastIndex := strings.Index(j, "<div jscontroller")
 		matcherStr := j[firstIndex+len(firstStr) : lastIndex]
-		regex := `\[\[(\d+),`
+		regex := `\[(\d+),`
 		re := regexp.MustCompile(regex)
-		m := re.FindStringSubmatch(matcherStr)
-		if len(matcherStr) > 1 {
-			resp = append(resp, m[1])
+		m := re.FindAllStringSubmatch(matcherStr, -1)
+		for i := 0; i < len(m); i++ {
+			if m[i][1] != "" {
+				entries = append(entries, m[i][1])
+			}
 		}
+		regex = `\d+,&#34;(.+?)&#34;,`
+		rep := regexp.MustCompile(regex)
+		n := rep.FindStringSubmatch(matcherStr)
+		if len(n) > 1 {
+			entry.Name = n[1]
+		}
+		for _, e := range entries {
+			if len(entries) > 1 {
+				entry.Entry = e
+				entry.Name = n[1]
+				resp = append(resp, entry)
+			}
+			entry.Entry = e
+		}
+
+		resp = append(resp, entry)
 	}
+
 	return resp
 }

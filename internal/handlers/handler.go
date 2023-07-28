@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"google-gen/internal/model"
 	"google-gen/pkg/helper"
 	"log"
 	"strconv"
-	"strings"
 )
 
 func NewHandle(opt *H) *H {
@@ -78,6 +78,6 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 	entries := helper.GetEntry(s)
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   strings.Join(entries, "\n"),
+		Text:   fmt.Sprint(entries),
 	})
 }
