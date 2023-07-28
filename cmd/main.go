@@ -37,8 +37,11 @@ func main() {
 
 	question := CRUD.NewQuestion(db)
 	questService := repo.QuestionRepo(question)
+
+	label := CRUD.NewLabel(db)
+	labelService := repo.LabelRepo(label)
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	handlers.New(ctx, cfg.TelegramToken, userService, questService)
+	handlers.New(ctx, cfg.TelegramToken, userService, questService, labelService)
 	defer cancel()
 
 }

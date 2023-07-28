@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"google-gen/internal/model"
@@ -62,7 +61,7 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 		})
 		return
 	}
-	_, err := h.Question.Create(ctx, model.Question{
+	qId, err := h.Question.Create(ctx, model.Question{
 		UserId: strconv.Itoa(int(update.Message.From.ID)),
 		Link:   update.Message.Text,
 	})
@@ -75,9 +74,19 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 		Text:   "сканируем ваш опросник :)",
 	})
 	s := helper.ExampleScrape(update.Message.Text)
-	entries := helper.GetEntry(s)
-	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: update.Message.Chat.ID,
-		Text:   fmt.Sprint(entries),
-	})
+	labels := helper.GetLabel(s)
+	for _, l := range labels {
+		_, err := h.Label.Create(ctx, model.Label{
+			Name:       l.Name,
+			Entry:      l.Entry,
+			QuestionId: qId,
+		})
+		log.Println(err)
+		if err != nil {
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   "не удалось записать ключи для опросника попробуйте снова :(",
+			})
+		}
+	}
 }

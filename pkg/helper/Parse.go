@@ -42,7 +42,7 @@ func IsGoogleFormsLink(url string) bool {
 	// и "viewform"
 	return strings.Contains(url, "google.com/forms/") && strings.Contains(url, "viewform") || strings.Contains(url, "https://forms.gle/")
 }
-func GetEntry(htmls []string) []model.Label {
+func GetLabel(htmls []string) []model.Label {
 	resp := make([]model.Label, 0)
 	firstStr := `data-params="%.@.[`
 	for _, j := range htmls {
