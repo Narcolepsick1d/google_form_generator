@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"google-gen/internal/model"
 	"log"
@@ -42,15 +43,19 @@ func IsGoogleFormsLink(url string) bool {
 	// и "viewform"
 	return strings.Contains(url, "google.com/forms/") && strings.Contains(url, "viewform") || strings.Contains(url, "https://forms.gle/")
 }
-func GetLabel(htmls []string) []model.Label {
+func GetLabel(htmls []string) ([]model.Label, []string) {
 	resp := make([]model.Label, 0)
 	firstStr := `data-params="%.@.[`
+	lastStr := `<div jscontroller`
+	htmlsResp := make([]string, 0, 10)
 	for _, j := range htmls {
 		var entry model.Label
-		entries := make([]string, 0)
+		entries := make([]string, 0, 10)
 		firstIndex := strings.Index(j, firstStr)
-		lastIndex := strings.Index(j, "<div jscontroller")
+		lastIndex := strings.Index(j, lastStr)
 		matcherStr := j[firstIndex+len(firstStr) : lastIndex]
+		//fmt.Println(matcherStr)
+		htmlsResp = append(htmlsResp, matcherStr)
 		regex := `\[(\d+),`
 		re := regexp.MustCompile(regex)
 		m := re.FindAllStringSubmatch(matcherStr, -1)
@@ -63,15 +68,60 @@ func GetLabel(htmls []string) []model.Label {
 		regex = `\d+,&#34;(.+?)&#34;,`
 		rep := regexp.MustCompile(regex)
 		n := rep.FindStringSubmatch(matcherStr)
-		log.Println("dsdasd", entries)
 		for _, e := range entries {
-			log.Print("entry :", e)
 			entry.Entry = e
 			entry.Name = n[1]
 			resp = append(resp, entry)
 		}
-
 	}
+	return resp, htmlsResp
+}
+func GetChoices(htmls []string) [][]string {
+	regex := `\[&#34;([^&#]*)&#34;,null`
+	re := regexp.MustCompile(regex)
 
-	return resp
+	samplex := make([][]string, 0, 10)
+	for _, v := range htmls {
+		sample := make([]string, 0, 10)
+		if re.Match([]byte(v)) {
+			m := re.FindAllStringSubmatch(v, -1)
+			for i := 0; i < len(m); i++ {
+				if m[i][1] != "" {
+					sample = append(sample, m[i][1])
+				}
+			}
+			samplex = append(samplex, sample)
+		} else { //для матриц и ебаный строчки * - * - * - * на сколько вы пидораз от 1 до 10
+			regexp1 := `\[&#34;([^&#]*)&#34;\]`
+			rep := regexp.MustCompile(regexp1)
+			n := rep.FindAllStringSubmatch(v, -1)
+			for i := 0; i < len(n); i++ {
+				if n[i][1] != "" {
+					sample = append(sample, n[i][1])
+				}
+			}
+			dig := strings.Join(sample, "")
+			digre := `^\d+`
+			dick := regexp.MustCompile(digre)
+			if dick.Match([]byte(dig)) {
+				samplex = append(samplex, sample[:])
+
+			} else {
+				hash := make(map[string]bool)
+				var res []string
+				for _, num := range sample {
+					if hash[num] {
+						// Если элемент уже был помечен, добавляем его в результат
+						res = append(res, num)
+					} else {
+						// Если элемент встречается впервые, помечаем его как повторяющийся
+						hash[num] = true
+					}
+				}
+				samplex = append(samplex, res)
+			}
+		}
+	}
+	fmt.Println(samplex)
+	return samplex
 }

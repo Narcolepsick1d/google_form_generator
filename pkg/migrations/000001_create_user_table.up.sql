@@ -27,7 +27,8 @@ Create table if not exists Choices(
     guid uuid default uuid_generate_v4(),
     choice varchar,
     probability int,
-    label_id int
+    label_id int,
+    is_multi bool default false
     );
 Create table if not exists Payment(
     id serial primary key,
