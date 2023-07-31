@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"google-gen/internal/model"
@@ -75,13 +76,13 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 	})
 	s := helper.ExampleScrape(update.Message.Text)
 	labels := helper.GetLabel(s)
+	fmt.Print("labels", labels)
 	for _, l := range labels {
 		_, err := h.Label.Create(ctx, model.Label{
 			Name:       l.Name,
 			Entry:      l.Entry,
 			QuestionId: qId,
 		})
-		log.Println(err)
 		if err != nil {
 			b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID: update.Message.Chat.ID,

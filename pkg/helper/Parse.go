@@ -54,6 +54,7 @@ func GetLabel(htmls []string) []model.Label {
 		regex := `\[(\d+),`
 		re := regexp.MustCompile(regex)
 		m := re.FindAllStringSubmatch(matcherStr, -1)
+
 		for i := 0; i < len(m); i++ {
 			if m[i][1] != "" {
 				entries = append(entries, m[i][1])
@@ -62,19 +63,14 @@ func GetLabel(htmls []string) []model.Label {
 		regex = `\d+,&#34;(.+?)&#34;,`
 		rep := regexp.MustCompile(regex)
 		n := rep.FindStringSubmatch(matcherStr)
-		if len(n) > 1 {
-			entry.Name = n[1]
-		}
+		log.Println("dsdasd", entries)
 		for _, e := range entries {
-			if len(entries) > 1 {
-				entry.Entry = e
-				entry.Name = n[1]
-				resp = append(resp, entry)
-			}
+			log.Print("entry :", e)
 			entry.Entry = e
+			entry.Name = n[1]
+			resp = append(resp, entry)
 		}
 
-		resp = append(resp, entry)
 	}
 
 	return resp
