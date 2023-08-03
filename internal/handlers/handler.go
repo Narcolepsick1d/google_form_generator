@@ -75,8 +75,9 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 	})
 	s := helper.ExampleScrape(update.Message.Text)
 	labels, htmls := helper.GetLabel(s)
+	labelguid := make([]string, 0, 10)
 	for _, l := range labels {
-		_, err := h.Label.Create(ctx, model.Label{
+		lguid, err := h.Label.Create(ctx, model.Label{
 			Name:       l.Name,
 			Entry:      l.Entry,
 			QuestionId: qId,
@@ -87,6 +88,18 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 				Text:   "не удалось записать ключи для опросника попробуйте снова :(",
 			})
 		}
+		labelguid = append(labelguid, lguid)
 	}
 	helper.GetChoices(htmls)
+	//for _, lguid := range labelguid {
+	//	err := h.Choice.Create(ctx, model.Choices{
+	//		Choice:  "",
+	//		LabelId: lguid})
+	//	if err != nil {
+	//		b.SendMessage(ctx, &bot.SendMessageParams{
+	//			ChatID: update.Message.Chat.ID,
+	//			Text:   "не удалось записать варианты для опросника попробуйте снова :(",
+	//		})
+	//	}
+	//}
 }

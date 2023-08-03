@@ -92,6 +92,7 @@ func GetChoices(htmls []string) [][]string {
 			}
 			samplex = append(samplex, sample)
 		} else { //для матриц и ебаный строчки * - * - * - * на сколько вы пидораз от 1 до 10
+			hash := make(map[string]int)
 			regexp1 := `\[&#34;([^&#]*)&#34;\]`
 			rep := regexp.MustCompile(regexp1)
 			n := rep.FindAllStringSubmatch(v, -1)
@@ -104,21 +105,32 @@ func GetChoices(htmls []string) [][]string {
 			digre := `^\d+`
 			dick := regexp.MustCompile(digre)
 			if dick.Match([]byte(dig)) {
-				samplex = append(samplex, sample[:])
-
+				samplex = append(samplex, sample)
 			} else {
-				hash := make(map[string]bool)
 				var res []string
-				for _, num := range sample {
-					if hash[num] {
-						// Если элемент уже был помечен, добавляем его в результат
-						res = append(res, num)
-					} else {
-						// Если элемент встречается впервые, помечаем его как повторяющийся
-						hash[num] = true
+				for _, vi := range sample {
+					hash[vi]++
+				}
+				for _, item := range sample {
+					if hash[item] > 1 {
+						res = append(res, item)
 					}
 				}
-				samplex = append(samplex, res)
+				//for i, r := range res {
+				//	div:=
+				//}
+				div := res[0]
+				count := 0
+				for _, r := range res {
+					if strings.Contains(r, div) {
+						count++
+					}
+				}
+				for d := 0; d < count; d++ {
+					fmt.Println("use")
+					samplex = append(samplex, res[0:count])
+				}
+
 			}
 		}
 	}
