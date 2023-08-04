@@ -5,9 +5,6 @@ import (
 	"google-gen/internal/model"
 )
 
-type Label struct {
-	repo LabelRepo
-}
 type LabelRepo interface {
 	Create(ctx context.Context, name model.Label) (string, error)
 	Update(ctx context.Context, name model.UpdateLabel) error

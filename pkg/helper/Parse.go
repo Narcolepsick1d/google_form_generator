@@ -1,7 +1,6 @@
 package helper
 
 import (
-	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"google-gen/internal/model"
 	"log"
@@ -127,13 +126,11 @@ func GetChoices(htmls []string) [][]string {
 					}
 				}
 				for d := 0; d < count; d++ {
-					fmt.Println("use")
 					samplex = append(samplex, res[0:count])
 				}
 
 			}
 		}
 	}
-	fmt.Println(samplex)
 	return samplex
 }

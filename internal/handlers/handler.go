@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"google-gen/internal/model"
@@ -90,16 +91,35 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 		}
 		labelguid = append(labelguid, lguid)
 	}
-	helper.GetChoices(htmls)
-	//for _, lguid := range labelguid {
-	//	err := h.Choice.Create(ctx, model.Choices{
-	//		Choice:  "",
-	//		LabelId: lguid})
-	//	if err != nil {
-	//		b.SendMessage(ctx, &bot.SendMessageParams{
-	//			ChatID: update.Message.Chat.ID,
-	//			Text:   "не удалось записать варианты для опросника попробуйте снова :(",
-	//		})
-	//	}
-	//}
+	chs := helper.GetChoices(htmls)
+	for i := 0; i < len(chs); i++ {
+		for j := 0; j < len(chs[i]); j++ {
+			err := h.Choice.Create(ctx, model.Choices{Choice: chs[i][j], LabelId: labelguid[i]})
+			if err != nil {
+				return
+			}
+		}
+	}
+	resp, err := h.Question.Get(ctx, qId)
+	if err != nil {
+		log.Print("1", err)
+		return
+	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   "Ваши вопросы и все возможные ответы",
+	})
+	cant := 0
+	for i, r := range resp {
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   r.Name + ":  " + r.Choice,
+		})
+		cant = i
+	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   fmt.Sprintf("Итого: %v %s %v", cant, "вариантов ответов на все вопросы, а их", len(labelguid)),
+	})
+	fmt.Print(cant)
 }

@@ -14,8 +14,8 @@ type H struct {
 	Choice   repo.ChoicesRepo
 }
 
-func New(ctx context.Context, telegramToken string, userService repo.UserRepoI, quesService repo.QuestionRepo, label repo.LabelRepo) {
-	api := NewHandle(&H{User: userService, Question: quesService, Label: label})
+func New(ctx context.Context, telegramToken string, userService repo.UserRepoI, quesService repo.QuestionRepo, label repo.LabelRepo, choice repo.ChoicesRepo) {
+	api := NewHandle(&H{User: userService, Question: quesService, Label: label, Choice: choice})
 	opts := []bot.Option{
 		bot.WithMiddlewares(showMessageWithUserID, showMessageWithUserName),
 		bot.WithMessageTextHandler("/start", bot.MatchTypeExact, api.handler),

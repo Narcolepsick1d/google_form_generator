@@ -40,8 +40,11 @@ func main() {
 
 	label := CRUD.NewLabel(db)
 	labelService := repo.LabelRepo(label)
+
+	choice := CRUD.NewChoice(db)
+	choiceService := repo.ChoicesRepo(choice)
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	handlers.New(ctx, cfg.TelegramToken, userService, questService, labelService)
+	handlers.New(ctx, cfg.TelegramToken, userService, questService, labelService, choiceService)
 	defer cancel()
 
 }

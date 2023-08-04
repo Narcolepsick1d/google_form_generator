@@ -12,7 +12,7 @@ create table if not  exists Questions(
     Id serial primary key,
     guid uuid default uuid_generate_v4(),
     User_id int ,
-    Url varchar,
+    Url varchar ,
     created_at timestamp default Current_timestamp
 );
 Create table if not exists Label(
