@@ -24,8 +24,11 @@ func (q QuestionRepo) Create(ctx context.Context, ques model.Question) (string, 
 	return guid, nil
 }
 func (q QuestionRepo) Get(ctx context.Context, string2 string) ([]model.RespQuestion, error) {
-	var choices []model.RespQuestion
-	query := `select q.guid,l.name,C.choice  from Questions q
+	var (
+		choices []model.RespQuestionDb
+		resp    []model.RespQuestion
+	)
+	query := `select q.guid,l.entry as entry_id,l.name,C.choice  from Questions q
     join Label L on q.Id = L.question_id
     join Choices C on L.id = C.label_id
 	where q.guid=$1;`
@@ -33,10 +36,37 @@ func (q QuestionRepo) Get(ctx context.Context, string2 string) ([]model.RespQues
 	if err != nil {
 		return nil, err
 	}
-	return choices, nil
+	end := len(choices)
+	chs := make([]string, 0, 10)
+	for i := 1; i < end; i++ {
+		//if choices[i].EntryId != choices[i-1].EntryId {
+		//}
+		if choices[i].EntryId == choices[i-1].EntryId {
+			chs = append(chs, choices[i-1].Choice)
+		} else {
+			chs = append(chs, choices[i-1].Choice)
+			resp = append(resp, model.RespQuestion{
+				EntryId: choices[i-1].EntryId,
+				Name:    choices[i-1].Name,
+				Choices: chs,
+				Id:      choices[i-1].Id,
+			})
+			chs = make([]string, 0, 10)
+		}
+		if end-1 == i {
+			chs = append(chs, choices[i].Choice)
+			resp = append(resp, model.RespQuestion{
+				EntryId: choices[i].EntryId,
+				Name:    choices[i].Name,
+				Choices: chs,
+				Id:      choices[i].Id,
+			})
+		}
+	}
+	return resp, nil
 }
-func (q QuestionRepo) GetByUrl(ctx context.Context, url string) ([]model.RespQuestion, error) {
-	var choices []model.RespQuestion
+func (q QuestionRepo) GetByUrl(ctx context.Context, url string) ([]model.RespQuestionDb, error) {
+	var choices []model.RespQuestionDb
 	query := `select q.guid,l.name,C.choice  from Questions q
     join Label L on q.Id = L.question_id
     join Choices C on L.id = C.label_id

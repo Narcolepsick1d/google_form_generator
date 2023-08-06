@@ -6,8 +6,15 @@ type Question struct {
 	Link        string
 	CreatedTime string
 }
+type RespQuestionDb struct {
+	Id      string `db:"guid"`
+	EntryId string `db:"entry_id"`
+	Name    string `db:"name"`
+	Choice  string `db:"choice"`
+}
 type RespQuestion struct {
-	Id     string `db:"guid"`
-	Name   string `db:"name"`
-	Choice string `db:"choice"`
+	Id      string
+	EntryId string
+	Name    string
+	Choices []string
 }

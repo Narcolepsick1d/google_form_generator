@@ -14,3 +14,11 @@ func TestQuestionRepo_GetByUrl(t *testing.T) {
 	assert.NotNil(t, resp)
 	log.Print(resp)
 }
+func TestQuestionRepo_Get(t *testing.T) {
+	repo := NewQuestion(db)
+	resp, err := repo.Get(context.Background(), "f8031f95-a316-46ea-8d44-38a920053dcd")
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	log.Print("len", len(resp), resp)
+
+}

@@ -9,6 +9,7 @@ import (
 	"google-gen/pkg/helper"
 	"log"
 	"strconv"
+	"strings"
 )
 
 func NewHandle(opt *H) *H {
@@ -109,17 +110,14 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 		ChatID: update.Message.Chat.ID,
 		Text:   "Ваши вопросы и все возможные ответы",
 	})
-	cant := 0
-	for i, r := range resp {
+	for _, r := range resp {
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   r.Name + ":  " + r.Choice,
+			Text:   r.Name + ": \n [" + strings.Join(r.Choices, ",") + "]",
 		})
-		cant = i
 	}
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   fmt.Sprintf("Итого: %v %s %v", cant, "вариантов ответов на все вопросы, а их", len(labelguid)),
+		Text:   fmt.Sprintf("Итого: %v %s ", len(labelguid), "вопросов"),
 	})
-	fmt.Print(cant)
 }
