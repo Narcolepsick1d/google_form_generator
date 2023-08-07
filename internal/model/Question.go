@@ -16,5 +16,5 @@ type RespQuestion struct {
 	Id      string
 	EntryId string
 	Name    string
-	Choices []string
+	Choices []Choices
 }

@@ -28,7 +28,7 @@ func (q QuestionRepo) Get(ctx context.Context, string2 string) ([]model.RespQues
 		choices []model.RespQuestionDb
 		resp    []model.RespQuestion
 	)
-	query := `select q.guid,l.entry as entry_id,l.name,C.choice  from Questions q
+	query := `select c.guid,l.entry as entry_id,l.name,C.choice  from Questions q
     join Label L on q.Id = L.question_id
     join Choices C on L.id = C.label_id
 	where q.guid=$1;`
@@ -37,24 +37,24 @@ func (q QuestionRepo) Get(ctx context.Context, string2 string) ([]model.RespQues
 		return nil, err
 	}
 	end := len(choices)
-	chs := make([]string, 0, 10)
+	chs := make([]model.Choices, 0, 10)
 	for i := 1; i < end; i++ {
 		//if choices[i].EntryId != choices[i-1].EntryId {
 		//}
 		if choices[i].EntryId == choices[i-1].EntryId {
-			chs = append(chs, choices[i-1].Choice)
+			chs = append(chs, model.Choices{Choice: choices[i-1].Choice, Id: choices[i-1].Id})
 		} else {
-			chs = append(chs, choices[i-1].Choice)
+			chs = append(chs, model.Choices{Choice: choices[i-1].Choice, Id: choices[i-1].Id})
 			resp = append(resp, model.RespQuestion{
 				EntryId: choices[i-1].EntryId,
 				Name:    choices[i-1].Name,
 				Choices: chs,
 				Id:      choices[i-1].Id,
 			})
-			chs = make([]string, 0, 10)
+			chs = make([]model.Choices, 0, 10)
 		}
 		if end-1 == i {
-			chs = append(chs, choices[i].Choice)
+			chs = append(chs, model.Choices{Choice: choices[i].Choice, Id: choices[i].Id})
 			resp = append(resp, model.RespQuestion{
 				EntryId: choices[i].EntryId,
 				Name:    choices[i].Name,

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+	"github.com/go-telegram/ui/keyboard/inline"
 	"google-gen/internal/model"
 	"google-gen/pkg/helper"
 	"log"
 	"strconv"
-	"strings"
 )
 
 func NewHandle(opt *H) *H {
@@ -110,14 +110,64 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 		ChatID: update.Message.Chat.ID,
 		Text:   "Ваши вопросы и все возможные ответы",
 	})
+
 	for _, r := range resp {
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
-			Text:   r.Name + ": \n [" + strings.Join(r.Choices, ",") + "]",
-		})
+		lena := len(r.Choices)
+		if lena > 10 {
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   "Вопрос с 0 или больше 10 вариантов ответа не принимаются",
+			})
+		}
+		switch lena {
+		case 2:
+			kb := inline.New(b).
+				Row().
+				Button(r.Choices[0].Choice, []byte(r.Choices[0].Id), updateChoices).
+				Button(r.Choices[1].Choice, []byte(r.Choices[1].Id), updateChoices).
+				Row().
+				Button("Cancel", []byte("cancel"), updateChoices)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:      update.Message.Chat.ID,
+				Text:        r.Name + ":",
+				ReplyMarkup: kb,
+			})
+			continue
+		case 3:
+		case 4:
+			kb := inline.New(b).
+				Row().
+				Button(r.Choices[0].Choice, []byte(r.Choices[0].Id), updateChoices).
+				Button(r.Choices[1].Choice, []byte(r.Choices[1].Id), updateChoices).
+				Row().
+				Button(r.Choices[2].Choice, []byte(r.Choices[2].Id), updateChoices).
+				Button(r.Choices[3].Choice, []byte(r.Choices[3].Id), updateChoices).
+				Row().
+				Button("Cancel", []byte("cancel"), updateChoices)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:      update.Message.Chat.ID,
+				Text:        r.Name + ":  ",
+				ReplyMarkup: kb,
+			})
+			continue
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+		case 10:
+
+		}
+
 	}
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
 		Text:   fmt.Sprintf("Итого: %v %s ", len(labelguid), "вопросов"),
+	})
+}
+func updateChoices(ctx context.Context, b *bot.Bot, mes *models.Message, data []byte) {
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: mes.Chat.ID,
+		Text:   "You selected: " + string(data),
 	})
 }

@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/go-telegram/bot v0.7.13
+	github.com/go-telegram/ui v0.1.1
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.9

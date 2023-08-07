@@ -7,6 +7,7 @@ type Choices struct {
 	LabelId     string
 }
 type UpdateChoices struct {
+	Id          string `db:"guid"`
 	Choice      string `db:"choice"`
 	Probability string `db:"probability"`
 }

@@ -79,6 +79,8 @@ github.com/go-sql-driver/mysql v1.6.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LB
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
 github.com/go-telegram/bot v0.7.13 h1:8VUBXtYwdh0skrCx6oORSrT0M9ZZaKIKIX3hC3XBs1A=
 github.com/go-telegram/bot v0.7.13/go.mod h1:i2TRs7fXWIeaceF3z7KzsMt/he0TwkVC680mvdTFYeM=
+github.com/go-telegram/ui v0.1.1 h1:W3VyIIRGOrczc9MvYDEbqllOg43PuOEASpRH6Wj5qgM=
+github.com/go-telegram/ui v0.1.1/go.mod h1:TfLsFmD6pHqc4KsBAyVq5EFwKKSAB3gI2dOj2v+Wyvk=
 github.com/gofrs/uuid v4.0.0+incompatible h1:1SD/1F5pU8p29ybwgQSwpQk+mwdRrXCYuPhW6m+TnJw=
 github.com/gofrs/uuid v4.0.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=

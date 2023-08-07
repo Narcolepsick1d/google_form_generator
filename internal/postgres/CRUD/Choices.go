@@ -21,7 +21,15 @@ func (c *ChoicesRepo) Create(ctx context.Context, choice model.Choices) error {
 	}
 	return nil
 }
-func (c *ChoicesRepo) Update(ctx context.Context, choice model.UpdateChoices) error { return nil }
+func (c *ChoicesRepo) Update(ctx context.Context, choice model.UpdateChoices) error {
+	q := `update choices set probability=$1,
+		is_multi=$2 where guid =$3 `
+	_, err := c.db.Exec(q, choice.Choice, choice.Probability, choice.Id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 func (c *ChoicesRepo) GetByLabelId(ctx context.Context, questionId string) ([]model.Choices, error) {
 	return nil, nil
 }
