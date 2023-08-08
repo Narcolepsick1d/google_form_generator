@@ -28,7 +28,7 @@ func (q QuestionRepo) Get(ctx context.Context, string2 string) ([]model.RespQues
 		choices []model.RespQuestionDb
 		resp    []model.RespQuestion
 	)
-	query := `select c.guid,l.entry as entry_id,l.name,C.choice  from Questions q
+	query := `select l.guid as label_id,c.guid,l.entry as entry_id,l.name,C.choice  from Questions q
     join Label L on q.Id = L.question_id
     join Choices C on L.id = C.label_id
 	where q.guid=$1;`
@@ -49,7 +49,7 @@ func (q QuestionRepo) Get(ctx context.Context, string2 string) ([]model.RespQues
 				EntryId: choices[i-1].EntryId,
 				Name:    choices[i-1].Name,
 				Choices: chs,
-				Id:      choices[i-1].Id,
+				Id:      choices[i-1].LabelId,
 			})
 			chs = make([]model.Choices, 0, 10)
 		}
@@ -59,7 +59,7 @@ func (q QuestionRepo) Get(ctx context.Context, string2 string) ([]model.RespQues
 				EntryId: choices[i].EntryId,
 				Name:    choices[i].Name,
 				Choices: chs,
-				Id:      choices[i].Id,
+				Id:      choices[i].LabelId,
 			})
 		}
 	}

@@ -24,7 +24,6 @@ func NewHandle(opt *H) *H {
 func showMessageWithUserID(next bot.HandlerFunc) bot.HandlerFunc {
 	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
 		if update.Message != nil {
-			log.Printf("%d say: %s", update.Message.From.ID, update.Message.Text)
 		}
 		next(ctx, b, update)
 	}
@@ -33,7 +32,6 @@ func showMessageWithUserID(next bot.HandlerFunc) bot.HandlerFunc {
 func showMessageWithUserName(next bot.HandlerFunc) bot.HandlerFunc {
 	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
 		if update.Message != nil {
-			log.Printf("%s say: %s", update.Message.From.FirstName, update.Message.Text)
 		}
 		next(ctx, b, update)
 	}
@@ -52,7 +50,11 @@ func (h *H) handler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	}
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   update.Message.Text,
+		Text:   "Привет этот бот умеет генерировать ответы для google forms с определенным процентажем на каждом вопросе просто скинь ссылку и начнем )",
+	})
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   "ПОЖАЛУЙСТА ЗАПОЛНЯЙТЕ ПРАВИЛЬНО",
 	})
 }
 func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -113,10 +115,10 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 
 	for _, r := range resp {
 		lena := len(r.Choices)
-		if lena > 10 {
+		if lena > 12 {
 			b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID: update.Message.Chat.ID,
-				Text:   "Вопрос с 0 или больше 10 вариантов ответа не принимаются",
+				Text:   "Вопрос с 1 или больше 12 вариантов ответа не принимаются",
 			})
 		}
 		switch lena {
@@ -126,14 +128,25 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 				Button(r.Choices[0].Choice, []byte(r.Choices[0].Id), updateChoices).
 				Button(r.Choices[1].Choice, []byte(r.Choices[1].Id), updateChoices).
 				Row().
-				Button("Cancel", []byte("cancel"), updateChoices)
+				Button("Мульти выбор", []byte(r.Id), updateChoices)
 			b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID:      update.Message.Chat.ID,
 				Text:        r.Name + ":",
 				ReplyMarkup: kb,
 			})
-			continue
 		case 3:
+			kb := inline.New(b).
+				Row().
+				Button(r.Choices[0].Choice, []byte(r.Choices[0].Id), updateChoices).
+				Button(r.Choices[1].Choice, []byte(r.Choices[1].Id), updateChoices).
+				Button(r.Choices[2].Choice, []byte(r.Choices[2].Id), updateChoices).
+				Row().
+				Button("Мульти выбор", []byte(r.Id), updateChoices)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:      update.Message.Chat.ID,
+				Text:        r.Name + ":",
+				ReplyMarkup: kb,
+			})
 		case 4:
 			kb := inline.New(b).
 				Row().
@@ -143,20 +156,178 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 				Button(r.Choices[2].Choice, []byte(r.Choices[2].Id), updateChoices).
 				Button(r.Choices[3].Choice, []byte(r.Choices[3].Id), updateChoices).
 				Row().
-				Button("Cancel", []byte("cancel"), updateChoices)
+				Button("Мульти выбор", []byte(r.Id), updateChoices)
 			b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID:      update.Message.Chat.ID,
 				Text:        r.Name + ":  ",
 				ReplyMarkup: kb,
 			})
-			continue
 		case 5:
+			kb := inline.New(b).
+				Row().
+				Button(r.Choices[0].Choice, []byte(r.Choices[0].Id), updateChoices).
+				Button(r.Choices[1].Choice, []byte(r.Choices[1].Id), updateChoices).
+				Row().
+				Button(r.Choices[2].Choice, []byte(r.Choices[2].Id), updateChoices).
+				Button(r.Choices[3].Choice, []byte(r.Choices[3].Id), updateChoices).
+				Button(r.Choices[4].Choice, []byte(r.Choices[4].Id), updateChoices).
+				Row().
+				Button("Мульти выбор", []byte(r.Id), updateChoices)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:      update.Message.Chat.ID,
+				Text:        r.Name + ":  ",
+				ReplyMarkup: kb,
+			})
 		case 6:
+			kb := inline.New(b).
+				Row().
+				Button(r.Choices[0].Choice, []byte(r.Choices[0].Id), updateChoices).
+				Button(r.Choices[1].Choice, []byte(r.Choices[1].Id), updateChoices).
+				Button(r.Choices[2].Choice, []byte(r.Choices[2].Id), updateChoices).
+				Row().
+				Button(r.Choices[3].Choice, []byte(r.Choices[3].Id), updateChoices).
+				Button(r.Choices[4].Choice, []byte(r.Choices[4].Id), updateChoices).
+				Button(r.Choices[5].Choice, []byte(r.Choices[5].Id), updateChoices).
+				Row().
+				Button("Мульти выбор", []byte(r.Id), updateChoices)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:      update.Message.Chat.ID,
+				Text:        r.Name + ":  ",
+				ReplyMarkup: kb,
+			})
 		case 7:
+			kb := inline.New(b).
+				Row().
+				Button(r.Choices[0].Choice, []byte(r.Choices[0].Id), updateChoices).
+				Button(r.Choices[1].Choice, []byte(r.Choices[1].Id), updateChoices).
+				Button(r.Choices[2].Choice, []byte(r.Choices[2].Id), updateChoices).
+				Row().
+				Button(r.Choices[3].Choice, []byte(r.Choices[3].Id), updateChoices).
+				Button(r.Choices[4].Choice, []byte(r.Choices[4].Id), updateChoices).
+				Button(r.Choices[5].Choice, []byte(r.Choices[5].Id), updateChoices).
+				Row().
+				Button(r.Choices[6].Choice, []byte(r.Choices[6].Id), updateChoices).
+				Row().
+				Button("Мульти выбор", []byte(r.Id), updateChoices)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:      update.Message.Chat.ID,
+				Text:        r.Name + ":  ",
+				ReplyMarkup: kb,
+			})
 		case 8:
+			kb := inline.New(b).
+				Row().
+				Button(r.Choices[0].Choice, []byte(r.Choices[0].Id), updateChoices).
+				Button(r.Choices[1].Choice, []byte(r.Choices[1].Id), updateChoices).
+				Button(r.Choices[2].Choice, []byte(r.Choices[2].Id), updateChoices).
+				Row().
+				Button(r.Choices[3].Choice, []byte(r.Choices[3].Id), updateChoices).
+				Button(r.Choices[4].Choice, []byte(r.Choices[4].Id), updateChoices).
+				Button(r.Choices[5].Choice, []byte(r.Choices[5].Id), updateChoices).
+				Row().
+				Button(r.Choices[6].Choice, []byte(r.Choices[6].Id), updateChoices).
+				Button(r.Choices[7].Choice, []byte(r.Choices[7].Id), updateChoices).
+				Row().
+				Button("Мульти выбор", []byte(r.Id), updateChoices)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:      update.Message.Chat.ID,
+				Text:        r.Name + ":  ",
+				ReplyMarkup: kb,
+			})
 		case 9:
+			kb := inline.New(b).
+				Row().
+				Button(r.Choices[0].Choice, []byte(r.Choices[0].Id), updateChoices).
+				Button(r.Choices[1].Choice, []byte(r.Choices[1].Id), updateChoices).
+				Button(r.Choices[2].Choice, []byte(r.Choices[2].Id), updateChoices).
+				Row().
+				Button(r.Choices[3].Choice, []byte(r.Choices[3].Id), updateChoices).
+				Button(r.Choices[4].Choice, []byte(r.Choices[4].Id), updateChoices).
+				Button(r.Choices[5].Choice, []byte(r.Choices[5].Id), updateChoices).
+				Row().
+				Button(r.Choices[6].Choice, []byte(r.Choices[6].Id), updateChoices).
+				Button(r.Choices[7].Choice, []byte(r.Choices[7].Id), updateChoices).
+				Button(r.Choices[8].Choice, []byte(r.Choices[8].Id), updateChoices).
+				Row().
+				Button("Мульти выбор", []byte(r.Id), updateChoices)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:      update.Message.Chat.ID,
+				Text:        r.Name + ":  ",
+				ReplyMarkup: kb,
+			})
 		case 10:
+			kb := inline.New(b).
+				Row().
+				Button(r.Choices[0].Choice, []byte(r.Choices[0].Id), updateChoices).
+				Button(r.Choices[1].Choice, []byte(r.Choices[1].Id), updateChoices).
+				Button(r.Choices[2].Choice, []byte(r.Choices[2].Id), updateChoices).
+				Row().
+				Button(r.Choices[3].Choice, []byte(r.Choices[3].Id), updateChoices).
+				Button(r.Choices[4].Choice, []byte(r.Choices[4].Id), updateChoices).
+				Button(r.Choices[5].Choice, []byte(r.Choices[5].Id), updateChoices).
+				Row().
+				Button(r.Choices[6].Choice, []byte(r.Choices[6].Id), updateChoices).
+				Button(r.Choices[7].Choice, []byte(r.Choices[7].Id), updateChoices).
+				Button(r.Choices[8].Choice, []byte(r.Choices[8].Id), updateChoices).
+				Row().
+				Button(r.Choices[9].Choice, []byte(r.Choices[9].Id), updateChoices).
+				Row().
+				Button("Мульти выбор", []byte(r.Id), updateChoices)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:      update.Message.Chat.ID,
+				Text:        r.Name + ":  ",
+				ReplyMarkup: kb,
+			})
 
+		case 11:
+			kb := inline.New(b).
+				Row().
+				Button(r.Choices[0].Choice, []byte(r.Choices[0].Id), updateChoices).
+				Button(r.Choices[1].Choice, []byte(r.Choices[1].Id), updateChoices).
+				Button(r.Choices[2].Choice, []byte(r.Choices[2].Id), updateChoices).
+				Row().
+				Button(r.Choices[3].Choice, []byte(r.Choices[3].Id), updateChoices).
+				Button(r.Choices[4].Choice, []byte(r.Choices[4].Id), updateChoices).
+				Button(r.Choices[5].Choice, []byte(r.Choices[5].Id), updateChoices).
+				Row().
+				Button(r.Choices[6].Choice, []byte(r.Choices[6].Id), updateChoices).
+				Button(r.Choices[7].Choice, []byte(r.Choices[7].Id), updateChoices).
+				Button(r.Choices[8].Choice, []byte(r.Choices[8].Id), updateChoices).
+				Row().
+				Button(r.Choices[9].Choice, []byte(r.Choices[9].Id), updateChoices).
+				Button(r.Choices[10].Choice, []byte(r.Choices[10].Id), updateChoices).
+				Row().
+				Button("Мульти выбор", []byte(r.Id), updateChoices)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:      update.Message.Chat.ID,
+				Text:        r.Name + ":  ",
+				ReplyMarkup: kb,
+			})
+		case 12:
+			kb := inline.New(b).
+				Row().
+				Button(r.Choices[0].Choice, []byte(r.Choices[0].Id), updateChoices).
+				Button(r.Choices[1].Choice, []byte(r.Choices[1].Id), updateChoices).
+				Button(r.Choices[2].Choice, []byte(r.Choices[2].Id), updateChoices).
+				Row().
+				Button(r.Choices[3].Choice, []byte(r.Choices[3].Id), updateChoices).
+				Button(r.Choices[4].Choice, []byte(r.Choices[4].Id), updateChoices).
+				Button(r.Choices[5].Choice, []byte(r.Choices[5].Id), updateChoices).
+				Row().
+				Button(r.Choices[6].Choice, []byte(r.Choices[6].Id), updateChoices).
+				Button(r.Choices[7].Choice, []byte(r.Choices[7].Id), updateChoices).
+				Button(r.Choices[8].Choice, []byte(r.Choices[8].Id), updateChoices).
+				Row().
+				Button(r.Choices[9].Choice, []byte(r.Choices[9].Id), updateChoices).
+				Button(r.Choices[10].Choice, []byte(r.Choices[10].Id), updateChoices).
+				Button(r.Choices[11].Choice, []byte(r.Choices[11].Id), updateChoices).
+				Row().
+				Button("Мульти выбор", []byte(r.Id), updateChoices)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID:      update.Message.Chat.ID,
+				Text:        r.Name + ":  ",
+				ReplyMarkup: kb,
+			})
 		}
 
 	}
@@ -170,4 +341,5 @@ func updateChoices(ctx context.Context, b *bot.Bot, mes *models.Message, data []
 		ChatID: mes.Chat.ID,
 		Text:   "You selected: " + string(data),
 	})
+	log.Println(string(data))
 }
