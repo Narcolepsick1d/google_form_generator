@@ -331,10 +331,18 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 		}
 
 	}
+	kb := inline.New(b).
+		Row().
+		Button("ВЕРНО", []byte("ok"), updateChoices).
+		Button("Неверно", []byte(""), supportHandler)
 	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: update.Message.Chat.ID,
-		Text:   fmt.Sprintf("Итого: %v %s ", len(labelguid), "вопросов"),
+		ChatID:      update.Message.Chat.ID,
+		Text:        fmt.Sprintf("Итого: %v %s ", len(labelguid), "вопросов \n"),
+		ReplyMarkup: kb,
 	})
+}
+func supportHandler(ctx context.Context, b *bot.Bot, mes *models.Message, data []byte) {
+
 }
 func updateChoices(ctx context.Context, b *bot.Bot, mes *models.Message, data []byte) {
 	b.SendMessage(ctx, &bot.SendMessageParams{
