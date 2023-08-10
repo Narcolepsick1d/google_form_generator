@@ -22,7 +22,15 @@ func (l LabelRepo) Create(ctx context.Context, name model.Label) (string, error)
 	}
 	return guid, nil
 }
-func (l LabelRepo) Update(ctx context.Context, name model.UpdateLabel) error { return nil }
+func (l LabelRepo) Update(ctx context.Context, name model.UpdateLabel) error {
+	q := "Update label Set  is_multi=$1 where guid =$2"
+	_, err := l.db.Exec(q, name.IsMulti, name.Id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 func (l LabelRepo) GetByQuestionUrl(ctx context.Context, url string) ([]model.Label, error) {
 	return nil, nil
 }

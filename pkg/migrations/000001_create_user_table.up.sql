@@ -20,15 +20,15 @@ Create table if not exists Label(
     guid uuid default uuid_generate_v4(),
     entry varchar not null,
     name varchar,
-    question_id int
+    question_id int,
+    is_multi bool default false
 );
 Create table if not exists Choices(
     id serial primary key,
     guid uuid default uuid_generate_v4(),
     choice varchar,
-    probability int,
-    label_id int,
-    is_multi bool default false
+    probability int default 0,
+    label_id int
     );
 Create table if not exists Payment(
     id serial primary key,

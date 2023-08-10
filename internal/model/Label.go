@@ -5,8 +5,11 @@ type Label struct {
 	Entry      string
 	Name       string
 	QuestionId string
+	IsMulti    string
 }
 type UpdateLabel struct {
-	Entry string
-	Name  string
+	Id      string
+	Entry   string
+	Name    string
+	IsMulti bool
 }
