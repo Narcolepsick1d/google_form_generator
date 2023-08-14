@@ -28,7 +28,8 @@ Create table if not exists Choices(
     guid uuid default uuid_generate_v4(),
     choice varchar,
     probability int default 0,
-    label_id int
+    label_id int,
+    updated_at timestamp
     );
 Create table if not exists Payment(
     id serial primary key,

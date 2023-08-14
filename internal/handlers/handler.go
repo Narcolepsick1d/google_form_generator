@@ -10,7 +10,11 @@ import (
 	"google-gen/internal/model"
 	"google-gen/pkg/helper"
 	"log"
+	"os"
+	"os/signal"
 	"strconv"
+	"strings"
+	"syscall"
 )
 
 func NewHandle(opt *H) *H {
@@ -61,6 +65,7 @@ func (h *H) handler(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 var (
 	Proba []model.StateProb
+	Next  bool
 )
 
 func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -128,35 +133,58 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 			ChatID: update.Message.Chat.ID,
 			Text:   "Ваши вопросы \n Пожалуйста выберите какие из них имеют мульти-выбор(multiple choices)",
 		})
+		ctx, cancel := context.WithCancel(context.Background())
+		signals := make(chan os.Signal, 1)
+		signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			select {
+			case <-signals:
+				fmt.Println("Отмена операции по сигналу")
+				cancel()
+			}
+		}()
 		for _, r := range resp {
-			tr := model.PropCh{
-				IsMulti:   true,
-				RespQuest: r,
-			}
-			reqT, err := json.Marshal(tr)
-			if err != nil {
-				log.Println(err, "error while unmarshal")
+			SetNext(false)
+			select {
+			case <-ctx.Done():
+				fmt.Println("Операция отменена")
 				return
+			default:
+				tr := model.PropCh{
+					IsMulti:   true,
+					RespQuest: r,
+				}
+				reqT, err := json.Marshal(tr)
+				if err != nil {
+					log.Println(err, "error while unmarshal")
+					return
+				}
+				fal := model.PropCh{
+					IsMulti:   false,
+					RespQuest: r,
+				}
+				reqF, err := json.Marshal(fal)
+				if err != nil {
+					log.Println(err, "error while unmarshal")
+					return
+				}
+				kb := inline.New(b).
+					Row().
+					Button("Мульти выбор", reqT, h.updateChoices).
+					Button("Один вариает ответа", reqF, h.updateChoices).
+					Row()
+				b.SendMessage(ctx, &bot.SendMessageParams{
+					ChatID:      update.Message.Chat.ID,
+					Text:        r.Name + ":",
+					ReplyMarkup: kb,
+				})
+				if !GetNext() {
+					fmt.Println("Ожидание подтверждения от пользователя...")
+					// Здесь ожидание, пока пользователь не подтвердит или отменит
+					// вы можете вызвать функцию, которая будет ожидать ввода пользователя и возвращать true/false
+				}
 			}
-			fal := model.PropCh{
-				IsMulti:   false,
-				RespQuest: r,
-			}
-			reqF, err := json.Marshal(fal)
-			if err != nil {
-				log.Println(err, "error while unmarshal")
-				return
-			}
-			kb := inline.New(b).
-				Row().
-				Button("Мульти выбор", reqT, h.updateChoicesTrue).
-				Button("Один вариает ответа", reqF, h.updateChoicesFalse).
-				Row()
-			b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID:      update.Message.Chat.ID,
-				Text:        r.Name + ":",
-				ReplyMarkup: kb,
-			})
+
 		}
 
 		kb := inline.New(b).
@@ -168,13 +196,65 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 			Text:        fmt.Sprintf("Итого: %v %s ", len(labelguid), "вопросов \n"),
 			ReplyMarkup: kb,
 		})
+
 	} else {
-		fmt.Println(update.Message.Text)
-		fmt.Println(Proba)
+		if len(Proba) == 0 {
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   fmt.Sprintf("Процесс прошел не по плану. Пожалуйста пройдите заново :("),
+			})
+			return
+		}
+		if !helper.IsProb(update.Message.Text) {
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   fmt.Sprintf("вы не правильно ввели проценты. Пример: \n 10,20,30 \n для соответсвуйщих вариантов ответа"),
+			})
+			return
+		}
+		numberStrings := strings.Split(update.Message.Text, ",")
+		numbers := make([]int, 0, 10)
+		for _, numStr := range numberStrings {
+			num, err := strconv.Atoi(numStr)
+			if err != nil {
+				log.Println(err)
+				b.SendMessage(ctx, &bot.SendMessageParams{
+					ChatID: update.Message.Chat.ID,
+					Text:   fmt.Sprintf("вы не правильно ввели проценты. Пример: \n 10,20,30 \n для соответсвуйщих вариантов ответа"),
+				})
+				return
+			}
+			numbers = append(numbers, num)
+		}
+		if len(Proba) != len(numbers) {
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   fmt.Sprintf("Количество вариантов ответа не совпадает с количеством процентов"),
+			})
+			return
+		}
+		for i, c := range Proba {
+			err := h.Choice.Update(ctx, model.UpdateChoices{Id: c.Id, Probability: numbers[i]})
+			if err != nil {
+				log.Printf("error while creating user %v", err)
+				return
+			}
+		}
 		Proba = make([]model.StateProb, 0, 12)
+		SetNext(true)
 	}
 }
-
+func SetNext(bool2 bool) {
+	Next = bool2
+}
+func GetNext() bool {
+	for {
+		if Next == true {
+			break
+		}
+	}
+	return Next
+}
 func (h *H) updateProb(ctx context.Context, b *bot.Bot, update *models.Message, data []byte) {
 	var r model.RespQuestion
 	err := json.Unmarshal(data, &r)
@@ -184,7 +264,12 @@ func (h *H) updateProb(ctx context.Context, b *bot.Bot, update *models.Message, 
 	}
 	fmt.Println(r)
 }
-
+func (h *H) helpHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   "Для помощи напишите @real_eye. Укажите причину проблемы",
+	})
+}
 func supportHandler(ctx context.Context, b *bot.Bot, mes *models.Message, data []byte) {
 	if string(data) == "ok" {
 		return
@@ -194,218 +279,38 @@ func supportHandler(ctx context.Context, b *bot.Bot, mes *models.Message, data [
 		Text:   "Для помощи напишите @real_eye. Укажите причину проблемы",
 	})
 }
-func (h *H) updateChoicesTrue(ctx context.Context, b *bot.Bot, update *models.Message, data []byte) {
-	var r model.RespQuestion
+func (h *H) updateChoices(ctx context.Context, b *bot.Bot, update *models.Message, data []byte) {
+	var r model.PropCh
 	err := json.Unmarshal(data, &r)
 	if err != nil {
 		log.Println(err, "error while unmarshal")
 		return
 	}
 
-	err = h.Label.Update(context.Background(), model.UpdateLabel{Id: r.Id, IsMulti: true})
+	err = h.Label.Update(context.Background(), model.UpdateLabel{Id: r.RespQuest.Id, IsMulti: r.IsMulti})
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	switch len(r.Choices) {
-	case 2:
-		kb := inline.New(b).
-			Row().
-			Button(r.Choices[0].Choice, data, h.updateProb).
-			Button(r.Choices[1].Choice, data, h.updateProb)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID:      update.Chat.ID,
-			Text:        r.Name + ":",
-			ReplyMarkup: kb,
-		})
-		Proba = append(Proba, model.StateProb{Id: r.Choices[0].Id}, model.StateProb{Id: r.Choices[1].Id})
-	case 3:
-		kb := inline.New(b).
-			Row().
-			Button(r.Choices[0].Choice, data, h.updateProb).
-			Button(r.Choices[1].Choice, data, h.updateProb).
-			Button(r.Choices[2].Choice, data, h.updateProb)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID:      update.Chat.ID,
-			Text:        r.Name + ":",
-			ReplyMarkup: kb,
-		})
-		Proba = append(Proba, model.StateProb{Id: r.Choices[0].Id}, model.StateProb{Id: r.Choices[1].Id})
-	case 4:
-		kb := inline.New(b).
-			Row().
-			Button(r.Choices[0].Choice, data, h.updateProb).
-			Button(r.Choices[1].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[2].Choice, data, h.updateProb).
-			Button(r.Choices[3].Choice, data, h.updateProb)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID:      update.Chat.ID,
-			Text:        r.Name + ":",
-			ReplyMarkup: kb,
-		})
-		Proba = append(Proba, model.StateProb{Id: r.Choices[0].Id}, model.StateProb{Id: r.Choices[1].Id})
-	case 5:
-		kb := inline.New(b).
-			Row().
-			Button(r.Choices[0].Choice, data, h.updateProb).
-			Button(r.Choices[1].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[2].Choice, data, h.updateProb).
-			Button(r.Choices[3].Choice, data, h.updateProb).
-			Button(r.Choices[4].Choice, data, h.updateProb)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID:      update.Chat.ID,
-			Text:        r.Name + ":  ",
-			ReplyMarkup: kb,
-		})
-		Proba = append(Proba, model.StateProb{Id: r.Choices[0].Id}, model.StateProb{Id: r.Choices[1].Id})
-	case 6:
-		kb := inline.New(b).
-			Row().
-			Button(r.Choices[0].Choice, data, h.updateProb).
-			Button(r.Choices[1].Choice, data, h.updateProb).
-			Button(r.Choices[2].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[3].Choice, data, h.updateProb).
-			Button(r.Choices[4].Choice, data, h.updateProb).
-			Button(r.Choices[5].Choice, data, h.updateProb)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID:      update.Chat.ID,
-			Text:        r.Name + ":  ",
-			ReplyMarkup: kb,
-		})
-		Proba = append(Proba, model.StateProb{Id: r.Choices[0].Id}, model.StateProb{Id: r.Choices[1].Id})
-	case 7:
-		kb := inline.New(b).
-			Row().
-			Button(r.Choices[0].Choice, data, h.updateProb).
-			Button(r.Choices[1].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[2].Choice, data, h.updateProb).
-			Button(r.Choices[3].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[4].Choice, data, h.updateProb).
-			Button(r.Choices[4].Choice, data, h.updateProb).
-			Button(r.Choices[5].Choice, data, h.updateProb).
-			Button(r.Choices[6].Choice, data, h.updateProb)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID:      update.Chat.ID,
-			Text:        r.Name + ":  ",
-			ReplyMarkup: kb,
-		})
-		Proba = append(Proba, model.StateProb{Id: r.Choices[0].Id}, model.StateProb{Id: r.Choices[1].Id})
-	case 8:
-		kb := inline.New(b).
-			Row().
-			Button(r.Choices[0].Choice, data, h.updateProb).
-			Button(r.Choices[1].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[2].Choice, data, h.updateProb).
-			Button(r.Choices[3].Choice, data, h.updateProb).
-			Button(r.Choices[4].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[5].Choice, data, h.updateProb).
-			Button(r.Choices[6].Choice, data, h.updateProb).
-			Button(r.Choices[7].Choice, data, h.updateProb)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID:      update.Chat.ID,
-			Text:        r.Name + ":  ",
-			ReplyMarkup: kb,
-		})
-		Proba = append(Proba, model.StateProb{Id: r.Choices[0].Id}, model.StateProb{Id: r.Choices[1].Id})
-	case 9:
-		kb := inline.New(b).
-			Row().
-			Button(r.Choices[0].Choice, data, h.updateProb).
-			Button(r.Choices[1].Choice, data, h.updateProb).
-			Button(r.Choices[2].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[3].Choice, data, h.updateProb).
-			Button(r.Choices[4].Choice, data, h.updateProb).
-			Button(r.Choices[5].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[6].Choice, data, h.updateProb).
-			Button(r.Choices[7].Choice, data, h.updateProb).
-			Button(r.Choices[8].Choice, data, h.updateProb)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID:      update.Chat.ID,
-			Text:        r.Name + ":  ",
-			ReplyMarkup: kb,
-		})
-		Proba = append(Proba, model.StateProb{Id: r.Choices[0].Id}, model.StateProb{Id: r.Choices[1].Id})
-	case 10:
-		kb := inline.New(b).
-			Row().
-			Button(r.Choices[0].Choice, data, h.updateProb).
-			Button(r.Choices[1].Choice, data, h.updateProb).
-			Button(r.Choices[2].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[3].Choice, data, h.updateProb).
-			Button(r.Choices[4].Choice, data, h.updateProb).
-			Button(r.Choices[5].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[6].Choice, data, h.updateProb).
-			Button(r.Choices[7].Choice, data, h.updateProb).
-			Button(r.Choices[8].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[9].Choice, data, h.updateProb)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID:      update.Chat.ID,
-			Text:        r.Name + ":  ",
-			ReplyMarkup: kb,
-		})
-		Proba = append(Proba, model.StateProb{Id: r.Choices[0].Id}, model.StateProb{Id: r.Choices[1].Id})
-	case 11:
-		kb := inline.New(b).
-			Row().
-			Button(r.Choices[0].Choice, data, h.updateProb).
-			Button(r.Choices[1].Choice, data, h.updateProb).
-			Button(r.Choices[2].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[3].Choice, data, h.updateProb).
-			Button(r.Choices[4].Choice, data, h.updateProb).
-			Button(r.Choices[5].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[6].Choice, data, h.updateProb).
-			Button(r.Choices[7].Choice, data, h.updateProb).
-			Button(r.Choices[8].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[9].Choice, data, h.updateProb).
-			Button(r.Choices[10].Choice, data, h.updateProb)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID:      update.Chat.ID,
-			Text:        r.Name + ":  ",
-			ReplyMarkup: kb,
-		})
-		Proba = append(Proba, model.StateProb{Id: r.Choices[0].Id}, model.StateProb{Id: r.Choices[1].Id})
-	case 12:
-		kb := inline.New(b).
-			Row().
-			Button(r.Choices[0].Choice, data, h.updateProb).
-			Button(r.Choices[1].Choice, data, h.updateProb).
-			Button(r.Choices[2].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[3].Choice, data, h.updateProb).
-			Button(r.Choices[4].Choice, data, h.updateProb).
-			Button(r.Choices[5].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[6].Choice, data, h.updateProb).
-			Button(r.Choices[7].Choice, data, h.updateProb).
-			Button(r.Choices[8].Choice, data, h.updateProb).
-			Row().
-			Button(r.Choices[9].Choice, data, h.updateProb).
-			Button(r.Choices[10].Choice, data, h.updateProb).
-			Button(r.Choices[11].Choice, data, h.updateProb)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID:      update.Chat.ID,
-			Text:        r.Name + ":  ",
-			ReplyMarkup: kb,
-		})
-		Proba = append(Proba, model.StateProb{Id: r.Choices[0].Id}, model.StateProb{Id: r.Choices[1].Id})
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Chat.ID,
+		Text:   "Напишите вероятность через запятую соответвенно к вариантам ответа",
+	})
+	strs := make([]string, 0, 10)
+	for _, chc := range r.RespQuest.Choices {
+		strs = append(strs, chc.Choice)
+	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Chat.ID,
+		Text:   r.RespQuest.Name + ": \n" + strings.Join(strs, ", "),
+	})
+	for _, k := range r.RespQuest.Choices {
+		Proba = append(Proba, model.StateProb{Id: k.Id})
 	}
 
 }
+
+/*
 func (h *H) updateChoicesFalse(ctx context.Context, b *bot.Bot, update *models.Message, data []byte) {
 	var r model.RespQuestion
 	err := json.Unmarshal(data, &r)
@@ -611,3 +516,4 @@ func (h *H) updateChoicesFalse(ctx context.Context, b *bot.Bot, update *models.M
 		Proba = append(Proba, model.StateProb{Id: r.Choices[0].Id}, model.StateProb{Id: r.Choices[1].Id})
 	}
 }
+*/

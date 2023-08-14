@@ -3,11 +3,11 @@ package model
 type Choices struct {
 	Id          string
 	Choice      string
-	Probability string
+	Probability int
 	LabelId     string
 }
 type UpdateChoices struct {
 	Id          string `db:"guid"`
 	Choice      string `db:"choice"`
-	Probability string `db:"probability"`
+	Probability int    `db:"probability"`
 }

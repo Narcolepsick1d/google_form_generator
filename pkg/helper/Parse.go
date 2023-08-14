@@ -42,6 +42,11 @@ func IsGoogleFormsLink(url string) bool {
 	// и "viewform"
 	return strings.Contains(url, "google.com/forms/") && strings.Contains(url, "viewform") || strings.Contains(url, "https://forms.gle/")
 }
+func IsProb(prop string) bool {
+	regex := `^\d+(,\d+)*$`
+	re := regexp.MustCompile(regex)
+	return re.Match([]byte(prop))
+}
 func GetLabel(htmls []string) ([]model.Label, []string) {
 	resp := make([]model.Label, 0)
 	firstStr := `data-params="%.@.[`
