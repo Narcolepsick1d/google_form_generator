@@ -5,3 +5,7 @@ type Final struct {
 	Name    string
 	Choices Choices
 }
+type PropCh struct {
+	IsMulti   bool
+	RespQuest RespQuestion
+}
