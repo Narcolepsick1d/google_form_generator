@@ -186,6 +186,22 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 			}
 
 		}
+		chswithProb, err := h.Question.Get(ctx, qId)
+		if err != nil {
+			log.Print("1", err)
+			return
+		}
+		for _, m := range chswithProb {
+			gg := make([]string, 0, 10)
+			for _, p := range m.Choices {
+				str := p.Choice + " " + strconv.Itoa(p.Probability) + "%"
+				gg = append(gg, str)
+			}
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   m.Name + "\n" + strings.Join(gg, "; "),
+			})
+		}
 
 		kb := inline.New(b).
 			Row().
@@ -255,15 +271,7 @@ func GetNext() bool {
 	}
 	return Next
 }
-func (h *H) updateProb(ctx context.Context, b *bot.Bot, update *models.Message, data []byte) {
-	var r model.RespQuestion
-	err := json.Unmarshal(data, &r)
-	if err != nil {
-		log.Println(err, "error while unmarshal")
-		return
-	}
-	fmt.Println(r)
-}
+
 func (h *H) helpHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,

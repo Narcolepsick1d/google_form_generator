@@ -6,7 +6,8 @@ import (
 	"google-gen/internal/handlers"
 	"google-gen/internal/postgres"
 	"google-gen/internal/postgres/CRUD"
-	"google-gen/internal/repo"
+	"google-gen/internal/postgres/repo"
+	"google-gen/internal/service"
 	"google-gen/pkg/config"
 	"log"
 	"os"
@@ -36,13 +37,16 @@ func main() {
 	userService := repo.UserRepoI(user)
 
 	question := CRUD.NewQuestion(db)
-	questService := repo.QuestionRepo(question)
+	questRepo := repo.QuestionRepo(question)
+	questService := service.NewQuestion(questRepo)
 
 	label := CRUD.NewLabel(db)
-	labelService := repo.LabelRepo(label)
+	labelRepo := repo.LabelRepo(label)
+	labelService := service.NewLabel(labelRepo)
 
 	choice := CRUD.NewChoice(db)
-	choiceService := repo.ChoicesRepo(choice)
+	choiceRepo := repo.ChoicesRepo(choice)
+	choiceService := service.NewChoice(choiceRepo)
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	handlers.New(ctx, cfg.TelegramToken, userService, questService, labelService, choiceService)
 	defer cancel()

@@ -2,10 +2,10 @@ package CRUD
 
 import (
 	"context"
+	"google-gen/internal/postgres/repo"
 
 	"github.com/jmoiron/sqlx"
 	"google-gen/internal/model"
-	"google-gen/internal/repo"
 )
 
 type UserRepo struct {

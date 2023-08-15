@@ -2,7 +2,6 @@ package CRUD
 
 import (
 	"context"
-	"fmt"
 	"github.com/jmoiron/sqlx"
 	"google-gen/internal/model"
 )
@@ -35,7 +34,6 @@ func (c *ChoicesRepo) Update(ctx context.Context, choice model.UpdateChoices) er
 		args["probability"] = choice.Probability
 	}
 	q += ` updated_at = CURRENT_TIMESTAMP where guid = :guid`
-	fmt.Print(q)
 	_, err := c.db.NamedExec(q, args)
 	if err != nil {
 		return err
