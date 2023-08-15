@@ -29,7 +29,7 @@ func (q QuestionRepo) Get(ctx context.Context, string2 string) ([]model.RespQues
 		choices []model.RespQuestionDb
 		resp    []model.RespQuestion
 	)
-	query := `select l.guid as label_id,c.guid,l.entry as entry_id,l.name,C.choice,C.Probability  from Questions q
+	query := `select q.Url,l.guid as label_id,c.guid,l.entry as entry_id,l.name,C.choice,C.Probability,l.is_multi  from Questions q
     join Label L on q.Id = L.question_id
     join Choices C on L.id = C.label_id
 	where q.guid=$1;`
@@ -49,8 +49,10 @@ func (q QuestionRepo) Get(ctx context.Context, string2 string) ([]model.RespQues
 			chs = append(chs, model.Choices{Choice: choices[i-1].Choice, Id: choices[i-1].Id, Probability: choices[i-1].Probability})
 			resp = append(resp, model.RespQuestion{
 				EntryId: choices[i-1].EntryId,
+				Url:     choices[i-1].Url,
 				Name:    choices[i-1].Name,
 				Choices: chs,
+				IsMulti: choices[i-1].IsMulti,
 				Id:      choices[i-1].LabelId,
 			})
 			chs = make([]model.Choices, 0, 10)
@@ -61,6 +63,8 @@ func (q QuestionRepo) Get(ctx context.Context, string2 string) ([]model.RespQues
 				EntryId: choices[i].EntryId,
 				Name:    choices[i].Name,
 				Choices: chs,
+				IsMulti: choices[i].IsMulti,
+				Url:     choices[i].Url,
 				Id:      choices[i].LabelId,
 			})
 		}

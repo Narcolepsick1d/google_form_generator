@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 )
 
 func NewHandle(opt *H) *H {
@@ -71,6 +72,7 @@ var (
 func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 	if helper.IsGoogleFormsLink(update.Message.Text) {
+		time.Sleep(1 * time.Second)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   "Проверьте вашу ссылку  ",
@@ -197,15 +199,24 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 				str := p.Choice + " " + strconv.Itoa(p.Probability) + "%"
 				gg = append(gg, str)
 			}
+			yesno := ""
+			if m.IsMulti {
+				yesno = "есть мультвыбор"
+			} else {
+				yesno = "один вариант ответа"
+			}
 			b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID: update.Message.Chat.ID,
-				Text:   m.Name + "\n" + strings.Join(gg, "; "),
+				Text:   m.Name + "\n" + strings.Join(gg, "; ") + "\n " + yesno,
 			})
 		}
-
+		marshal, err := json.Marshal(chswithProb)
+		if err != nil {
+			return
+		}
 		kb := inline.New(b).
 			Row().
-			Button("ВЕРНО", []byte("ok"), supportHandler).
+			Button("ВЕРНО", marshal, h.AmountCather).
 			Button("Неверно", []byte(""), supportHandler)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID:      update.Message.Chat.ID,
@@ -230,6 +241,28 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 		}
 		numberStrings := strings.Split(update.Message.Text, ",")
 		numbers := make([]int, 0, 10)
+		sum := 0
+		var bcc error
+		for _, s := range numberStrings {
+			num, err := strconv.Atoi(s)
+			log.Println(err)
+			bcc = err
+			sum += num
+		}
+		fmt.Println(sum)
+		if bcc != nil {
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   fmt.Sprintf("вы не правильно ввели проценты. Пример: \n 10,20,30 \n для соответсвуйщих вариантов ответа"),
+			})
+			return
+		}
+		if sum >= 100 {
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   fmt.Sprintf("Сумма процентов выбора перевалила за 100 генерация данных может стать не точными"),
+			})
+		}
 		for _, numStr := range numberStrings {
 			num, err := strconv.Atoi(numStr)
 			if err != nil {
@@ -270,6 +303,141 @@ func GetNext() bool {
 		}
 	}
 	return Next
+}
+func (h *H) AmountCather(ctx context.Context, b *bot.Bot, mes *models.Message, data []byte) {
+	kb := inline.New(b).
+		Row().
+		Button("50", data, h.DodosAttacker50).
+		Button("125", data, h.DodosAttacker125).
+		Row().
+		Button("260", data, h.DodosAttacker260).
+		Button("500", data, h.DodosAttacker500)
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:      mes.Chat.ID,
+		Text:        "Выберите количество заполнений",
+		ReplyMarkup: kb,
+	})
+}
+func (h *H) DodosAttacker50(ctx context.Context, b *bot.Bot, mes *models.Message, data []byte) {
+	var final []model.RespQuestion
+	err := json.Unmarshal(data, &final)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: mes.Chat.ID,
+		Text:   "Процесс начался ждите ...",
+	})
+	urll := helper.ReplaceUrl(final[0].Url)
+
+	for i := 0; i < 50; i++ {
+		err = helper.Dodos(final, urll)
+		if err != nil {
+			log.Print(err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: mes.Chat.ID,
+				Text:   "Ошибка. Используйте команду для связи с админом /help",
+			})
+		}
+
+	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: mes.Chat.ID,
+		Text:   "Процесс завершился",
+	})
+
+}
+func (h *H) DodosAttacker125(ctx context.Context, b *bot.Bot, mes *models.Message, data []byte) {
+	var final []model.RespQuestion
+	err := json.Unmarshal(data, &final)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: mes.Chat.ID,
+		Text:   "Процесс начался ждите ...",
+	})
+	urll := helper.ReplaceUrl(final[0].Url)
+	for i := 0; i < 125; i++ {
+		err = helper.Dodos(final, urll)
+		if err != nil {
+			log.Print(err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: mes.Chat.ID,
+				Text:   "Ошибка. Используйте команду для связи с админом /help",
+			})
+		}
+
+	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: mes.Chat.ID,
+		Text:   "Процесс завершился",
+	})
+
+}
+
+func (h *H) DodosAttacker260(ctx context.Context, b *bot.Bot, mes *models.Message, data []byte) {
+	var final []model.RespQuestion
+	err := json.Unmarshal(data, &final)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: mes.Chat.ID,
+		Text:   "Процесс начался ждите ...",
+	})
+	urll := helper.ReplaceUrl(final[0].Url)
+
+	for i := 0; i < 260; i++ {
+		err = helper.Dodos(final, urll)
+		if err != nil {
+			log.Print(err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: mes.Chat.ID,
+				Text:   "Ошибка. Используйте команду для связи с админом /help",
+			})
+		}
+
+	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: mes.Chat.ID,
+		Text:   "Процесс завершился",
+	})
+
+}
+
+func (h *H) DodosAttacker500(ctx context.Context, b *bot.Bot, mes *models.Message, data []byte) {
+	var final []model.RespQuestion
+	err := json.Unmarshal(data, &final)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: mes.Chat.ID,
+		Text:   "Процесс начался ждите ...",
+	})
+	urll := helper.ReplaceUrl(final[0].Url)
+
+	for i := 0; i < 500; i++ {
+		err = helper.Dodos(final, urll)
+		if err != nil {
+			log.Print(err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: mes.Chat.ID,
+				Text:   "Ошибка. Используйте команду для связи с админом /help",
+			})
+		}
+
+	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: mes.Chat.ID,
+		Text:   "Процесс завершился",
+	})
+
 }
 
 func (h *H) helpHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
