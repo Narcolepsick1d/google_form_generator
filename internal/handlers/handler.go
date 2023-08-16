@@ -60,6 +60,39 @@ func (h *H) handler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	})
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
+		Text:   "Соблюдайте эти правила",
+	})
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text: "1. Бот не умеет заполнять поля без вариантов ответа " +
+			"и вариант где есть поле Другое: и также пока не умеет обходить обязательную авторизацию аккаунта через email",
+	})
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text: "2. Пожалуйста убедитесь что ваша форма не имеет разных разделов то есть все вопросы " +
+			"находяться на одной страницы \n" +
+			"(P.S. Если это ваш опросник то просто поставьте все вопросы в один раздел и потом переставьте после заверщения процесса)",
+	})
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text: "3. Бот может отвечать на такие типы вопросов \n" +
+			"Один из списка \n" +
+			"Несколько из списка \n" +
+			"Раскрывающийся список \n" +
+			"Шкала \n" +
+			"Сетка (множественный выбор) \n" +
+			"Сетка флажков \n",
+	})
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   "4. Админ рассматривает проблемные случаи и пожелание пользователей в свободное время. он тоже человек и он может спать",
+	})
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   "Если вы согласны и ознакомились с этими правилами то нажмите на комманду \n /confirm",
+	})
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
 		Text:   "ПОЖАЛУЙСТА ЗАПОЛНЯЙТЕ ПРАВИЛЬНО",
 	})
 }
@@ -73,10 +106,6 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 
 	if helper.IsGoogleFormsLink(update.Message.Text) {
 		time.Sleep(1 * time.Second)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
-			Text:   "Проверьте вашу ссылку  ",
-		})
 		qId, err := h.Question.Create(ctx, model.Question{
 			UserId: strconv.Itoa(int(update.Message.From.ID)),
 			Link:   update.Message.Text,
@@ -172,7 +201,7 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 				}
 				kb := inline.New(b).
 					Row().
-					Button("Мульти выбор", reqT, h.updateChoices).
+					Button("Несколько вариантов ответа", reqT, h.updateChoices).
 					Button("Один вариает ответа", reqF, h.updateChoices).
 					Row()
 				b.SendMessage(ctx, &bot.SendMessageParams{
@@ -201,9 +230,9 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 			}
 			yesno := ""
 			if m.IsMulti {
-				yesno = "есть мультвыбор"
+				yesno = "Несколько вариантов ответа"
 			} else {
-				yesno = "один вариант ответа"
+				yesno = "Один вариант ответа"
 			}
 			b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID: update.Message.Chat.ID,
@@ -224,18 +253,11 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 			ReplyMarkup: kb,
 		})
 
-	} else {
+	} else if helper.IsProb(update.Message.Text) {
 		if len(Proba) == 0 {
 			b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID: update.Message.Chat.ID,
 				Text:   fmt.Sprintf("Процесс прошел не по плану. Пожалуйста пройдите заново :("),
-			})
-			return
-		}
-		if !helper.IsProb(update.Message.Text) {
-			b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID: update.Message.Chat.ID,
-				Text:   fmt.Sprintf("вы не правильно ввели проценты. Пример: \n 10,20,30 \n для соответсвуйщих вариантов ответа"),
 			})
 			return
 		}
@@ -257,7 +279,7 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 			})
 			return
 		}
-		if sum >= 100 {
+		if sum > 100 {
 			b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID: update.Message.Chat.ID,
 				Text:   fmt.Sprintf("Сумма процентов выбора перевалила за 100 генерация данных может стать не точными"),
@@ -292,6 +314,15 @@ func (h *H) urlStartHandler(ctx context.Context, b *bot.Bot, update *models.Upda
 		Proba = make([]model.StateProb, 0, 12)
 		SetNext(true)
 	}
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   "Проверьте вашу ссылку в ней на конце должно быть написанно /viewform или ",
+	})
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   fmt.Sprintf("вы не правильно ввели проценты. Пример: \n 10,20,30 \n для соответсвуйщих вариантов ответа"),
+	})
+	return
 }
 func SetNext(bool2 bool) {
 	Next = bool2
@@ -339,6 +370,7 @@ func (h *H) DodosAttacker50(ctx context.Context, b *bot.Bot, mes *models.Message
 				ChatID: mes.Chat.ID,
 				Text:   "Ошибка. Используйте команду для связи с админом /help",
 			})
+			break
 		}
 
 	}
@@ -368,6 +400,8 @@ func (h *H) DodosAttacker125(ctx context.Context, b *bot.Bot, mes *models.Messag
 				ChatID: mes.Chat.ID,
 				Text:   "Ошибка. Используйте команду для связи с админом /help",
 			})
+			break
+
 		}
 
 	}
@@ -399,6 +433,8 @@ func (h *H) DodosAttacker260(ctx context.Context, b *bot.Bot, mes *models.Messag
 				ChatID: mes.Chat.ID,
 				Text:   "Ошибка. Используйте команду для связи с админом /help",
 			})
+			break
+
 		}
 
 	}
@@ -430,6 +466,7 @@ func (h *H) DodosAttacker500(ctx context.Context, b *bot.Bot, mes *models.Messag
 				ChatID: mes.Chat.ID,
 				Text:   "Ошибка. Используйте команду для связи с админом /help",
 			})
+			break
 		}
 
 	}
@@ -439,7 +476,16 @@ func (h *H) DodosAttacker500(ctx context.Context, b *bot.Bot, mes *models.Messag
 	})
 
 }
-
+func (h *H) confirmHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: 2143065,
+		Text:   "Поймали",
+	})
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: 2117211492,
+		Text:   "Поймали",
+	})
+}
 func (h *H) helpHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
@@ -470,7 +516,8 @@ func (h *H) updateChoices(ctx context.Context, b *bot.Bot, update *models.Messag
 	}
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Chat.ID,
-		Text:   "Напишите вероятность через запятую соответвенно к вариантам ответа",
+		Text: "Напишите вероятность через запятую соответвенно к вариантам ответа \n" +
+			"Пример: 10,20,30,40",
 	})
 	strs := make([]string, 0, 10)
 	for _, chc := range r.RespQuest.Choices {

@@ -21,7 +21,7 @@ func New(ctx context.Context, telegramToken string, userService repo2.UserRepoI,
 		bot.WithMessageTextHandler("/start", bot.MatchTypeExact, api.handler),
 		bot.WithDefaultHandler(api.urlStartHandler),
 		bot.WithMessageTextHandler("/help", bot.MatchTypeExact, api.helpHandler),
-		bot.WithMessageTextHandler("/confirm", bot.MatchTypeExact, api.helpHandler),
+		bot.WithMessageTextHandler("/confirm", bot.MatchTypeExact, api.confirmHandler),
 	}
 	b, _ := bot.New(telegramToken, opts...)
 

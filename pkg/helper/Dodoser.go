@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"errors"
 	"google-gen/internal/model"
 	"log"
 	"math/rand"
@@ -72,10 +73,13 @@ func Dodos(info []model.RespQuestion, urll string) error {
 	}
 	time.Sleep(2 * time.Second)
 	resp = make([]model.FinalEntity, 0, 75)
-	_, err := http.PostForm(urll, nigger)
+	t, err := http.PostForm(urll, nigger)
 	if err != nil {
 		log.Print(err)
 		return err
+	}
+	if t.StatusCode != 200 {
+		return errors.New("Что то не так с опросником")
 	}
 	return nil
 }
