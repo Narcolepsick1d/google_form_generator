@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3'
 
 services:
 
@@ -8,27 +8,62 @@ services:
       dockerfile: ./Dockerfile
     restart: always
     ports:
-      - "8081:80"
+      - "127.0.0.1:8080:8080"
+    depends_on:
+     - postgres
     deploy:
       mode: replicated
       replicas: 1
     environment:
-      DSN: "host=postgres port=5432 user=postgres  dbname=postgres sslmode=disable timezone=UTC connect_timeout=5 password=21garik21"
-
-
-
+      DSN: "host=postgres port=5432 user=postgres dbname=postgres sslmode=disable timezone=UTC connect_timeout=5 password=21garik21"
 
   postgres:
     image: 'postgres:14.2'
-    ports:
-      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=21garik21
+      - POSTGRES_DB=postgres
     restart: always
+    ports:
+      - '127.0.0.1:5432:5432'
     deploy:
       mode: replicated
       replicas: 1
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 21garik21
-      POSTGRES_DB: postgres
     volumes:
-      - ./db-data/postgres/:/var/lib/postgresql/data/
+      - ./db-data/postgres/:/var/lib/postgresql/data
+
+
+
+    #  postgres:
+#    image: 'postgres:14.2'
+#    ports:
+#      - "5432:5432"
+#    restart: always
+#    deploy:
+#      mode: replicated
+#      replicas: 1
+#    environment:
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: 21garik21
+#      POSTGRES_DB: postgres
+#    volumes:
+#       - database_postgres:/var/lib/postgresql/data
+#    networks:
+#      - fullstack
+#
+#
+#  volumes:
+#    api:
+#    database_postgres:
+#
+#  networks:
+#    fullstack:
+#      driver: bridge
+
+
+
+
+
+
+    # Networks to be created to facilitate communication between containers
+
